@@ -1,0 +1,116 @@
+version: '3.8'
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.10.4
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    PYTHONPATH: /opt/airflow
+    DB_PATH: /opt/airflow/db/pipeline.duckdb
+    LANDING_DIR: /opt/airflow/data/landing
+    API_BASE_URL: https://hub.juheapi.com
+    _PIP_ADDITIONAL_REQUIREMENTS: >-
+      duckdb pandas pyarrow httpx tenacity pydantic pydantic-settings
+      python-dotenv requests
+  env_file:
+    - .env
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./pipeline:/opt/airflow/pipeline
+    - ./data:/opt/airflow/data          # landing zone (Parquet files)
+    - duckdb-data:/opt/airflow/db       # DuckDB database (named volume — no Windows ACL issues)
+    - airflow-logs:/opt/airflow/logs
+    - airflow-plugins:/opt/airflow/plugins
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  duckdb-init:
+    image: busybox
+    user: "0:0"
+    volumes:
+      - duckdb-data:/duckdb
+    command: sh -c "chown -R 50000:0 /duckdb && chmod -R 775 /duckdb"
+    restart: "no"
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  airflow-init:
+    <<: *airflow-common
+    command: bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true"
+    restart: on-failure
+    depends_on:
+      duckdb-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  duckdb-ui:
+    image: python:3.11-slim
+    ports:
+      - "4213:4214"
+    volumes:
+      - duckdb-data:/db
+    command: >-
+      bash -c "
+      apt-get update -qq && apt-get install -y -qq socat &&
+      pip install -q duckdb==1.5.1 &&
+      python3 -c \"import duckdb, time; conn = duckdb.connect(':memory:'); conn.execute(\\\"ATTACH '/db/pipeline.duckdb' AS pipeline (READ_ONLY)\\\"); conn.execute('INSTALL ui; LOAD ui; CALL start_ui();'); [time.sleep(3600) for _ in iter(int, 1)]\" &
+      sleep 8 &&
+      socat TCP-LISTEN:4214,fork,reuseaddr TCP6:[::1]:4213
+      "
+    restart: always
+    depends_on:
+      duckdb-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-db-volume:
+  airflow-logs:
+  airflow-plugins:
+  duckdb-data:        # named volume for DuckDB — proper Linux permissions, persists across restarts
