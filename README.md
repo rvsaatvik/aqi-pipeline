@@ -66,7 +66,14 @@ JuHe AQI API
 | Python | 3.11+ (for running tests locally) | https://python.org |
 | pip | any | bundled with Python |
 
-A JuHe API key with access to the AQI endpoint (`/aqi/v1/city`) is required. Register at **https://www.juhe.cn** and subscribe to the AQI API to obtain one.
+A JuHe API key is required. The steps below are all necessary — skipping any one of them results in `code: 10001 / invalid apikey` even if a key exists.
+
+1. Register at **https://www.juhe.cn** (real-name / phone verification required)
+2. Navigate to the AQI product page and click **立即申请 / Apply** to subscribe — the key is not active until you explicitly subscribe to this API
+3. Go to **我的数据 (My Data)** and copy the key shown for the AQI subscription
+4. Paste it as `API_KEY` in your `.env` file
+
+> The API is hosted at `hub.juheapi.com` (not `apis.juhe.cn`). Make sure you are subscribed to the hub-hosted AQI product specifically.
 
 ---
 
@@ -75,8 +82,8 @@ A JuHe API key with access to the AQI endpoint (`/aqi/v1/city`) is required. Reg
 ### 1. Clone the repository
 
 ```bash
-git clone <repo-url>
-cd <repo-directory>
+git clone https://github.com/rvsaatvik/aqi-pipeline.git
+cd aqi-pipeline
 ```
 
 ### 2. Configure environment variables
