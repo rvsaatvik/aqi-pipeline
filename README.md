@@ -155,21 +155,29 @@ docker exec carta-airflow-scheduler-1 \
 
 ## Exploring data
 
-Open **http://localhost:4213** (DuckDB UI). The pipeline database is available as the `pipeline` catalog:
+Open **http://localhost:4213** (DuckDB UI).
+
+The UI starts with a clean in-memory session to avoid holding a file lock that would block Airflow writes. Attach the pipeline database when you want to explore, and detach when done:
 
 ```sql
--- All loaded records
+-- Step 1: attach (run once per session)
+ATTACH '/db/pipeline.duckdb' AS pipeline (READ_ONLY);
+
+-- Query examples
 SELECT * FROM pipeline.daily_new_york_aqi ORDER BY partition_date DESC;
 
--- AQI trend
 SELECT partition_date, aqi, pm25, pm10
 FROM pipeline.daily_new_york_aqi
 ORDER BY partition_date;
 
--- Inspect raw API response
 SELECT partition_date, record_metadata->>'$.response_ts' AS fetched_at
 FROM pipeline.daily_new_york_aqi;
+
+-- Step 2: detach when done (releases the file lock so Airflow can write)
+DETACH pipeline;
 ```
+
+> **Why ATTACH/DETACH?** DuckDB only allows one writer at a time. A persistent read-only connection from the UI blocks the Airflow load task from acquiring its write lock. Attaching on-demand and detaching when done ensures the two never conflict.
 
 ### DuckDB schema
 

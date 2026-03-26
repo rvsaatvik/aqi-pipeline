@@ -100,7 +100,7 @@ services:
       bash -c "
       apt-get update -qq && apt-get install -y -qq socat &&
       pip install -q duckdb==1.5.1 &&
-      python3 -c \"import duckdb, time; conn = duckdb.connect(':memory:'); conn.execute(\\\"ATTACH '/db/pipeline.duckdb' AS pipeline (READ_ONLY)\\\"); conn.execute('INSTALL ui; LOAD ui; CALL start_ui();'); [time.sleep(3600) for _ in iter(int, 1)]\" &
+      python3 -c \"import duckdb, time; conn = duckdb.connect(':memory:'); conn.execute('INSTALL ui; LOAD ui; CALL start_ui();'); [time.sleep(3600) for _ in iter(int, 1)]\" &
       sleep 8 &&
       socat TCP-LISTEN:4214,fork,reuseaddr TCP6:[::1]:4213
       "
