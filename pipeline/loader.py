@@ -87,6 +87,7 @@ def validate_schema(df: pd.DataFrame) -> None:
         if col not in df.columns:
             continue
         non_null = df[col].dropna()
+        non_null = non_null[non_null != ""]  # API returns "" for missing pollutants
         if non_null.empty:
             continue
         try:
@@ -133,7 +134,7 @@ class DuckDBLoader:
             [partition_date],
         )
         def _f(v: Any) -> float | None:
-            return float(v) if v is not None else None
+            return float(v) if v not in (None, "") else None
 
         self.con.execute(
             """
