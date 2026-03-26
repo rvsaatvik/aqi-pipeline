@@ -35,11 +35,11 @@ def test_api_key_is_accepted():
     if not key:
         pytest.skip("API_KEY not configured — skipping live API test")
 
-    resp = requests.get(JUHE_URL, params={"city": CITY, "key": key}, timeout=15)
+    resp = requests.get(JUHE_URL, params={"q": CITY, "apikey": key}, timeout=15)
     resp.raise_for_status()
     payload = resp.json()
 
-    assert str(payload.get("code")) == "200", (
+    assert str(payload.get("code")) == "0", (
         f"JuHe API rejected the key — code={payload.get('code')!r}, "
         f"msg={payload.get('msg')!r}"
     )
@@ -52,7 +52,7 @@ def test_api_response_has_required_fields():
     if not key:
         pytest.skip("API_KEY not configured — skipping live API test")
 
-    resp = requests.get(JUHE_URL, params={"city": CITY, "key": key}, timeout=15)
+    resp = requests.get(JUHE_URL, params={"q": CITY, "apikey": key}, timeout=15)
     payload = resp.json()
     data = payload.get("data", {})
 

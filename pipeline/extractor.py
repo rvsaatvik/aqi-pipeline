@@ -62,12 +62,12 @@ class AQIExtractor:
         url = f"{self.BASE_URL}{self.ENDPOINT}"
         response = requests.get(
             url,
-            params={"city": CITY, "key": self.api_key},
+            params={"q": CITY, "apikey": self.api_key},
             timeout=30,
         )
         response.raise_for_status()
         payload = response.json()
-        if str(payload.get("code")) != "200":
+        if str(payload.get("code")) != "0":
             raise ValueError(
                 f"JuHe API error — code={payload.get('code')!r}, "
                 f"msg={payload.get('msg')!r}. Check your API key."

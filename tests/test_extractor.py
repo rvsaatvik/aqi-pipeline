@@ -29,10 +29,16 @@ def extractor(tmp_path):
     return AQIExtractor(api_key="test-key", landing_dir=str(tmp_path / "landing"))
 
 
-def test_extract_uses_key_query_param(extractor, requests_mock):
+def test_extract_uses_apikey_query_param(extractor, requests_mock):
     requests_mock.get("https://hub.juheapi.com/aqi/v1/city", json=MOCK_RESPONSE)
     extractor.extract(EXECUTION_DT)
-    assert requests_mock.last_request.qs["key"] == ["test-key"]
+    assert requests_mock.last_request.qs["apikey"] == ["test-key"]
+
+
+def test_extract_uses_q_for_city(extractor, requests_mock):
+    requests_mock.get("https://hub.juheapi.com/aqi/v1/city", json=MOCK_RESPONSE)
+    extractor.extract(EXECUTION_DT)
+    assert requests_mock.last_request.qs["q"] == ["New York"]
 
 
 def test_extract_no_bearer_header(extractor, requests_mock):
