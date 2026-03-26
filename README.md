@@ -68,12 +68,12 @@ JuHe AQI API
 
 A JuHe API key is required. The steps below are all necessary — skipping any one of them results in `code: 10001 / invalid apikey` even if a key exists.
 
-1. Register at **https://www.juhe.cn** (real-name / phone verification required)
-2. Navigate to the AQI product page and click **立即申请 / Apply** to subscribe — the key is not active until you explicitly subscribe to this API
-3. Go to **我的数据 (My Data)** and copy the key shown for the AQI subscription
+1. Register at **https://www.juheapi.com** (real-name / phone verification required)
+2. Go to **https://www.juheapi.com/console/apis**, find the AQI API, and click **Subscribe / 申请** — the key is not active until you explicitly subscribe
+3. Once subscribed, return to the console and copy the API key shown for the AQI subscription
 4. Paste it as `API_KEY` in your `.env` file
 
-> The API is hosted at `hub.juheapi.com` (not `apis.juhe.cn`). Make sure you are subscribed to the hub-hosted AQI product specifically.
+> The API is hosted at `hub.juheapi.com`. Make sure you are subscribed via the console at `juheapi.com/console/apis` and are using the key issued there.
 
 ---
 
