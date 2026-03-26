@@ -3,6 +3,7 @@
 
 # Runtime data
 data/
+ui/
 
 # Python
 __pycache__/

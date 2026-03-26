@@ -73,7 +73,7 @@ A JuHe API key is required. The steps below are all necessary — skipping any o
 3. Once subscribed, return to the console and copy the API key shown for the AQI subscription
 4. Paste it as `API_KEY` in your `.env` file
 
-> The API is hosted at `hub.juheapi.com`. Make sure you are subscribed via the console at `juheapi.com/console/apis` and are using the key issued there.
+> **API parameter note:** The endpoint uses `q` for city name and `apikey` for authentication — not `city`/`key`. A successful response returns `"code": "0"` (not `"200"`). This is handled automatically by the extractor; you only need a valid key in `.env`.
 
 ---
 
